@@ -1,7 +1,7 @@
 //! A simple example showing how to use oxidized_navigation with xpbd.
 
 use bevy::{math::primitives, prelude::*};
-use bevy_xpbd_3d::prelude::{Collider, PhysicsPlugins};
+use avian3d::prelude::{Collider, PhysicsPlugins};
 use oxidized_navigation::{
     debug_draw::{DrawNavMesh, OxidizedNavigationDebugDrawPlugin},
     NavMeshAffector, NavMeshSettings, OxidizedNavigationPlugin,
@@ -13,7 +13,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Oxidized Navigation: XPBD".to_owned(),
+                    title: "Oxidized Navigation: Avian".to_owned(),
                     ..default()
                 }),
                 ..default()

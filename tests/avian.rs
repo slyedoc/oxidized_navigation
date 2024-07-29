@@ -1,7 +1,7 @@
 use std::{num::NonZeroU16, time::Duration};
 
 use bevy::prelude::*;
-use bevy_xpbd_3d::prelude::{Collider, PhysicsPlugins};
+use avian3d::prelude::{Collider, PhysicsPlugins};
 use oxidized_navigation::{
     query::find_path, ActiveGenerationTasks, NavMesh, NavMeshAffector, NavMeshSettings,
     OxidizedNavigationPlugin,
@@ -103,7 +103,18 @@ fn test_simple_navigation() {
     // Run pathfinding to get a polygon path.
     let path = find_path(&nav_mesh, nav_mesh_settings, start_pos, end_pos, None, None);
 
+
     if let Err(error) = path {
         panic!("Pathfinding failed: {error:?}");
+        
     }
+    let path = path.unwrap();
+    assert!(path.len() == 3, "{:?}", path);
+    // [
+    //     Vec3(5.0, 0.0, 5.0), 
+    //     Vec3(-4.996079, 0.0, 0.0), 
+    //     Vec3(-12.25, 0.0, -12.25)
+    // ]
+    
+
 }
