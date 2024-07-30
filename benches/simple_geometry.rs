@@ -7,7 +7,13 @@ use oxidized_navigation::{
     conversion::{ColliderType, GeometryCollection, GeometryToConvert},
     NavMeshSettings,
 };
+
+#[cfg(feature = "parry_015")]
+pub use parry3d_015 as parry3d;
+#[cfg(feature = "parry_016")]
+pub use parry3d_016 as parry3d;
 use parry3d::shape::Cuboid;
+
 
 fn generate_single_primitive_geometry() {
     let tile_coord = UVec2::new(0, 0);

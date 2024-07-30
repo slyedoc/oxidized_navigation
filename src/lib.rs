@@ -65,7 +65,9 @@ use heightfields::{
     erode_walkable_area, HeightFieldCollection,
 };
 use mesher::build_poly_mesh;
-use crate::parry::parry3d::{math::Isometry, na::Vector3,shape::TypedShape};
+
+use crate::parry::parry3d::{math::Isometry, shape::TypedShape, na::Vector3};
+
 use regions::build_regions;
 use smallvec::SmallVec;
 use tiles::{create_nav_mesh_tile_from_poly_mesh, NavMeshTile, NavMeshTiles};
@@ -76,12 +78,12 @@ pub mod conversion;
 #[cfg(feature = "debug_draw")]
 pub mod debug_draw;
 mod heightfields;
+mod math;
 mod mesher;
 mod parry;
 pub mod query;
 mod regions;
 pub mod tiles;
-mod math;
 
 /// System sets containing the crate's systems.
 #[derive(SystemSet, Debug, PartialEq, Eq, Hash, Clone)]
@@ -711,14 +713,14 @@ fn send_tile_rebuild_tasks_system<C: OxidizedCollider>(
 }
 
 /// Event containing the tile coordinate of a generated/regenerated tile.
-/// 
+///
 /// Emitted when a tile has been updated.
 #[derive(Event)]
 pub struct TileGenerated(pub UVec2);
 
 fn remove_finished_tasks(
     mut active_generation_tasks: ResMut<ActiveGenerationTasks>,
-    mut event: EventWriter<TileGenerated>
+    mut event: EventWriter<TileGenerated>,
 ) {
     active_generation_tasks.0.retain_mut(|task| {
         if let Some(tile) = future::block_on(future::poll_once(task)) {
@@ -775,7 +777,7 @@ async fn build_tile(
         nav_mesh.tile_generations.insert(tile_coord, generation);
 
         nav_mesh.add_tile(tile_coord, nav_mesh_tile, &nav_mesh_settings);
-        
+
         Some(tile_coord)
     } else {
         None

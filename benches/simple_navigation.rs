@@ -12,6 +12,10 @@ use oxidized_navigation::{
     tiles::{NavMeshTile, NavMeshTiles},
     NavMeshSettings,
 };
+#[cfg(feature = "parry_015")]
+pub use parry3d_015 as parry3d;
+#[cfg(feature = "parry_016")]
+pub use parry3d_016 as parry3d;
 use parry3d::shape::Cuboid;
 
 fn generate_single_primitive_geometry(nav_mesh_settings: &NavMeshSettings) -> NavMeshTile {
