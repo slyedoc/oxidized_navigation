@@ -46,6 +46,10 @@ name = "avian"
 required-features = ["avian", "debug_draw"]
 
 [[example]]
+name = "avian_heightfield"
+required-features = ["avian", "debug_draw"]
+
+[[example]]
 name = "avian_multi_floor"
 required-features = ["avian", "debug_draw"]
 

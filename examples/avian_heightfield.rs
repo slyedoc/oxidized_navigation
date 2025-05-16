@@ -5,14 +5,14 @@
 //! Press B to run blocking path finding.
 //!
 
-use avian3d::prelude::Collider;
-use avian3d::PhysicsPlugins;
+use avian3d::prelude::*;
 use bevy::tasks::futures_lite::future;
 use bevy::{
     color::palettes,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task},
 };
+use oxidized_navigation::DetailMeshSettings;
 use oxidized_navigation::{
     colliders::avian::AvianCollider,
     debug_draw::{DrawNavMesh, DrawPath, OxidizedNavigationDebugDrawPlugin},
@@ -20,6 +20,7 @@ use oxidized_navigation::{
     tiles::NavMeshTiles,
     NavMesh, NavMeshAffector, NavMeshSettings, OxidizedNavigationPlugin,
 };
+use std::num::{NonZeroU16, NonZeroU8};
 use std::sync::{Arc, RwLock};
 
 fn main() {
@@ -28,18 +29,24 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Oxidized Navigation: Avian 3d Multi floor".to_owned(),
+                    title: "Oxidized Navigation: Avian 3d Heightfield".to_owned(),
                     ..default()
                 }),
                 ..default()
             }),
-            OxidizedNavigationPlugin::<AvianCollider>::new(NavMeshSettings::from_agent_and_bounds(
-                0.5, 1.9, 250.0, -1.0,
-            )),
+            OxidizedNavigationPlugin::<AvianCollider>::new(
+                NavMeshSettings::from_agent_and_bounds(0.5, 1.9, 250.0, -20.0)
+                    .with_max_tile_generation_tasks(Some(NonZeroU16::MIN))
+                    .with_experimental_detail_mesh_generation(DetailMeshSettings {
+                        max_height_error: NonZeroU16::new(4).unwrap(),
+                        sample_step: NonZeroU8::new(16).unwrap(),
+                    }),
+            ),
             OxidizedNavigationDebugDrawPlugin,
             // The rapier plugin needs to be added for the scales of colliders to be correct if the scale of the entity is not uniformly 1.
             // An example of this is the "Thin Wall" in [setup_world_system]. If you remove this plugin, it will not appear correctly.
             PhysicsPlugins::default(),
+            PhysicsDebugPlugin::default(),
         ))
         .insert_resource(AsyncPathfindingTasks::default())
         .add_systems(Startup, setup_world_system)
@@ -211,7 +218,7 @@ fn setup_world_system(
 
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(15.0, 10.0, 20.0).looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
+        Transform::from_xyz(30.0, 20.0, 40.0).looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
     ));
 
     commands.spawn((
@@ -222,20 +229,18 @@ fn setup_world_system(
         Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.0, -0.5, 0.0)),
     ));
 
-    // Plane
-    commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(10.0, 10.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::IDENTITY,
-        Collider::cuboid(10.0, 0.2, 10.0),
-        NavMeshAffector, // Only entities with a NavMeshAffector component will contribute to the nav-mesh.
-    ));
+    let resolution = 70;    
+    let mut heightfield = vec![vec![0.0; resolution]; resolution];
+    for x in 0..resolution {
+        for y in 0..resolution {
+            heightfield[x][y] = ((x as f32 / 10.0).sin() + (y as f32 / 10.0).cos());
+        }
+    }
 
-    commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(10.0, 10.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.68, 0.68, 1.0))),
-        Transform::from_xyz(0.0, 6.0, 0.0),
-        Collider::cuboid(10.0, 0.2, 10.0),
+    // Heightfield.
+    commands.spawn((        
+        Transform::IDENTITY,
+        Collider::heightfield(heightfield, Vec3::new(resolution as f32, 9.0, resolution as f32)),
         NavMeshAffector, // Only entities with a NavMeshAffector component will contribute to the nav-mesh.
     ));
 }
@@ -252,7 +257,7 @@ fn spawn_or_despawn_affector_system(
     }
 
     if let Some(entity) = *spawned_entity {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
         *spawned_entity = None;
     } else {
         let entity = commands
